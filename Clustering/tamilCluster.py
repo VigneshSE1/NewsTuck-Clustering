@@ -16,7 +16,7 @@ import math
 
 # Read DataSet and Return the JSON Data
 def getNewsArticlesJson():
-    file  = open("TamilDataSet.json",encoding="utf8")
+    file  = open("SampleDataSets/TamilDataSet.json",encoding="utf8")
     datas = json.load(file)
     return datas
 

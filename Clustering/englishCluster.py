@@ -15,7 +15,7 @@ import fasttext.util
 import math
 
 def getNewsArticlesJson():
-    file  = open("EnglishArticles.json",encoding="utf8")
+    file  = open("SampleDataSets/EnglishDataSet.json",encoding="utf8")
     datas = json.load(file)
     return datas
 
