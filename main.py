@@ -14,11 +14,20 @@ import fasttext
 import fasttext.util
 import math
 
+import DatabaseAccess
+from DatabaseAccess import getTodayNewsFromDb
+
 # Read DataSet and Return the JSON Data
 def getNewsArticlesJson():
-    file  = open("SampleDataSets/TamilDataSet.json",encoding="utf8")
-    datas = json.load(file)
-    return datas
+    newsArticles = getTodayNewsFromDb()
+    return newsArticles
+
+import LanguageDetection
+from LanguageDetection import detectLanguage
+
+def seperateArticlesByLanguage(newsArticles):
+    language_seperated = detectLanguage(newsArticles)
+    return language_seperated
 
 # Make Array Of Title's
 def getNewsTitlesFromJson(jsonData):
@@ -29,9 +38,12 @@ def getNewsTitlesFromJson(jsonData):
     return ArrayOfSentence
 
 # Generate VectorForms as NumPy Array Using FastText Model
-def getVectorsFromFastText(titleList):
+def getVectorsFromFastText(titleList,language):
     vectorValues = []
-    model = fasttext.load_model("D:/Models/cc.ta.300.bin")
+    if(language == "ta"):
+        model = fasttext.load_model("D:/Models/cc.ta.300.bin")
+    elif(language == "en"):
+        model = fasttext.load_model("D:/Models/cc.en.300.bin")
 
     for title in titleList:
         a = model.get_word_vector(title)
@@ -58,25 +70,41 @@ def clusterArticleByKMeans(clusterNumber,vectors,newsArticleJson):
     labels = clf.fit_predict(vectors)
 
     for index, newsArticle in enumerate(newsArticleJson):
-        labelValue = labels[index]
-        newsArticleJson[index]["ClusterId"] = int(labelValue)
+        labelValue = labels[index] 
+        newsArticleJson[index]["ClusterId"] = int(labelValue)+1
     return sorted(newsArticleJson, key = lambda i: (i['ClusterId']))
 
 # Write the ClusteredOutput into JSON File
-def writeClsuterdJson(clusteredJson):
-    with open('ProgrammaticallyTamilClustered.json', 'w', encoding='utf-8') as f:
+def writeClsuterdJson(clusteredJson,filename):
+    with open(filename, 'w', encoding='utf-8') as f:
         json.dump(clusteredJson, f, ensure_ascii=False, indent=4)
 
 
 # __Main__
 newsArticleJson = getNewsArticlesJson()
-newsTitles = getNewsTitlesFromJson(newsArticleJson)
-newsVectors = getVectorsFromFastText(newsTitles)
-noOfClusters = findSilhouetteMaxScore(newsVectors)
-clusteredJson = clusterArticleByKMeans(noOfClusters,newsVectors,newsArticleJson)
-writeClsuterdJson(clusteredJson)
+seperateBylanguage = seperateArticlesByLanguage(newsArticleJson)
+#print(seperateBylanguage)
 
+# For TamilArticles
+newsTitlesTamil = getNewsTitlesFromJson(seperateBylanguage["tamil"])
+newsVectorsTamil = getVectorsFromFastText(newsTitlesTamil,"ta")
+noOfClustersTamil = findSilhouetteMaxScore(newsVectorsTamil)
+clusteredJsonTamil = clusterArticleByKMeans(noOfClustersTamil,newsVectorsTamil,seperateBylanguage["tamil"])
+#writeClsuterdJson(clusteredJsonTamil,"Tamil.json")
 
+# For EnglishArticles
+newsTitlesEnglish = getNewsTitlesFromJson(seperateBylanguage["english"])
+newsVectorsEnglish = getVectorsFromFastText(newsTitlesEnglish,"en")
+noOfClustersEnglish = findSilhouetteMaxScore(newsVectorsEnglish)
+clusteredJsonEnglish = clusterArticleByKMeans(noOfClustersEnglish,newsVectorsEnglish,seperateBylanguage["english"])
+#writeClsuterdJson(clusteredJsonEnglish,"English.json")
+
+#Write to DataBase
+clusteredJsonTamil.extend(clusteredJsonEnglish)
+
+from DatabaseAccess import commitResultToDataBase
+
+rowsAffected = commitResultToDataBase(clusteredJsonTamil)
 #----------------------------------------------------------------------------------------------------------------------------------------S
 
 # Find the Optimal Number Of Cluster using Elbow Method
