@@ -1,7 +1,5 @@
-FROM python:3.6
-ADD newspaper /newspaper
-ADD app.py /
+FROM python:3.8
+ADD api.py /
 ADD requirements.txt /
 RUN pip install -r requirements.txt
-EXPOSE 80
-CMD [ "python", "./app.py" ]
+CMD [ "python", "./api.py" ]

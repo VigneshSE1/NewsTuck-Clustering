@@ -13,6 +13,7 @@ import json
 import fasttext
 import fasttext.util
 import math
+import pickle
 
 import DatabaseAccess
 from DatabaseAccess import getTodayNewsFromDb
@@ -20,6 +21,7 @@ from DatabaseAccess import getTodayNewsFromDb
 # Read DataSet and Return the JSON Data
 def getNewsArticlesJson():
     newsArticles = getTodayNewsFromDb()
+    #print(newsArticles)
     return newsArticles
 
 import LanguageDetection
@@ -60,8 +62,9 @@ def findSilhouetteMaxScore(vectorArray):
         cluster_labels = cluster.fit_predict(vectorArray)
         silhouette_avg = silhouette_score(vectorArray, cluster_labels)
         silhouetteScore.append(silhouette_avg)
+   # print(silhouetteScore)
     maxpos = silhouetteScore.index(max(silhouetteScore)) 
-    print(maxpos+2)
+   # print(maxpos+2)
     return maxpos+2
  
 # Cluster the NewsArticle BY K-Means
@@ -71,7 +74,7 @@ def clusterArticleByKMeans(clusterNumber,vectors,newsArticleJson):
 
     for index, newsArticle in enumerate(newsArticleJson):
         labelValue = labels[index] 
-        newsArticleJson[index]["ClusterId"] = int(labelValue)+1
+        newsArticle["ClusterId"] = int(labelValue)+1
     return sorted(newsArticleJson, key = lambda i: (i['ClusterId']))
 
 # Write the ClusteredOutput into JSON File

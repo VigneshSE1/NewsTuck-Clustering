@@ -39,7 +39,7 @@ def commitResultToDataBase(resultJson):
     #print(resultJson)
     Updatequery = """UPDATE FeedItems SET ClusterId = (%s), Language = (%s)  WHERE FeedItemId = (%s)"""
     for news in resultJson:
-        print(news["ClusterId"],news["Language"],news["FeedItemId"])
+       # print(news["ClusterId"],news["Language"],news["FeedItemId"])
         values = (news["ClusterId"],news["Language"],news["FeedItemId"])
         mycursor.execute(Updatequery,values)
         mydb.commit()
